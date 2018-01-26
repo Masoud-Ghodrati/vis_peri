@@ -4,6 +4,7 @@ clear
 close all
 clc
 
+TICK_LENDTH = 3;
 dimension_1 = 2;
 dimension_2 = 300;
 
@@ -20,3 +21,4 @@ aX.Box = 'off';
 aX.TickDir = 'out';
 aX.XLabel.String = 'x';
 aX.YLabel.String = 'y';
+aX.TickLength = TICK_LENDTH*aX.TickLength;
