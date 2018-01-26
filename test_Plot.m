@@ -6,11 +6,15 @@ clc
 
 TICK_LENDTH = 3;
 dimension_1 = 2;
-dimension_2 = 300;
+dimension_2 = 400;
 
-rnd = randn(dimension_1, dimension_2);
+rnd = randn(dimension_2, dimension_1);
+average_rnd = mean(rnd);
+upsample_rnd = upsample(rnd, 2);
+upsample_rnd(upsample_rnd(:, 1)==0, 1) = average_rnd(1);
+upsample_rnd(upsample_rnd(:, 2)==0, 2) = average_rnd(2);
 
-h = plot(rnd(1,:), rnd(2,:));
+h = plot(upsample_rnd(:,1), upsample_rnd(:,2));
 h.Marker = 'o';
 h.MarkerEdgeColor = 'k';
 h.MarkerFaceColor = 'r';
