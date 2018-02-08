@@ -6,33 +6,44 @@ import datetime
 from matplotlib import pyplot as plt
 
 current_Path = "C:/Users/masoudg/Dropbox/EyeTracker/Plots_Based_On_Farzad_Data_2Jan2018/"
-save_PDF_Path = current_Path
+save_PDF_Path = current_Path + 'PyFigures/'
 data_Path = current_Path + "Dataset/"
 dir_Category_Levels = os.listdir(data_Path)
-Results = {}
-for iCategory_Level in dir_Category_Levels:
+Results = {}  # an empty dictionary to store the results of analysis. probably not the best way to store the data
+
+for iCategory_Level in dir_Category_Levels:  # loop over different category levels
+
     print(f'{iCategory_Level:25s}: ')
 
-    current_Category = os.listdir(data_Path + iCategory_Level + "/")
-    This_category_Results = {}
+    current_Category = os.listdir(data_Path + iCategory_Level + "/")  # get what's inside this directory
+    This_category_Results = {}  # an empty dictionary to store the results of analysis for this category
 
-    for iExperiment_InCategory in current_Category:
+    for iExperiment_InCategory in current_Category:  # loop over the experiments in this particular category
+                                                     # (e.g, animal/non-animal)
 
         print(f'{iExperiment_InCategory:25s}: ', end="")
-        this_this_Experiment = os.listdir(data_Path + iCategory_Level + "/" + iExperiment_InCategory + "/")
+        this_this_Experiment = os.listdir(data_Path + iCategory_Level + "/" + iExperiment_InCategory + "/") # get what's inside this directory
 
-        This_Experiment_Result = {}
+        This_Experiment_Result = {} # an empty dictionary to store the results of analysis for this experiment
+                                    # (e.g, animal/non-animal)
+
+        # making some empty arrays storing subject's performance
         this_subject_Accuracy = np.zeros((len(this_this_Experiment), 9))
         this_subject_Accuracy_Class1 = np.zeros((len(this_this_Experiment), 9))
         this_subject_Accuracy_Class2 = np.zeros((len(this_this_Experiment), 9))
         subject_Index = 0
-        for iSubject in this_this_Experiment:
+
+        for iSubject in this_this_Experiment:  # loop over subjects in this experiment
 
             print(iSubject + ", ", end="")
-            this_Subject = os.listdir(data_Path + iCategory_Level + "/" + iExperiment_InCategory + "/" + iSubject + "/" )
-            this_Subject_DataFile = glob.glob(data_Path + iCategory_Level + "/" + iExperiment_InCategory + "/" + iSubject + "/" + "*.xlsx")
-            this_Subject_Data = pd.read_excel(this_Subject_DataFile[0])
 
+            this_Subject = os.listdir(data_Path + iCategory_Level + "/" + iExperiment_InCategory + "/" + iSubject + "/" )  # get what's inside this directory
+            this_Subject_DataFile = glob.glob(data_Path + iCategory_Level + "/" + iExperiment_InCategory + "/" +
+                                              iSubject + "/" + "*.xlsx")  # find all .xlsx files, there're might be
+                                                                          # multiple files but we only need one
+            this_Subject_Data = pd.read_excel(this_Subject_DataFile[0])  # get the first xlsx file
+
+            # extract the different arrays from excel files
             stimulus_Position_Array = np.array(this_Subject_Data[this_Subject_Data.columns[3]])
             subject_Response_Array = np.array(this_Subject_Data[this_Subject_Data.columns[10]])
             task_Label_Array = np.array(this_Subject_Data[this_Subject_Data.columns[2]])
@@ -46,6 +57,7 @@ for iCategory_Level in dir_Category_Levels:
 
             for iPosition in np.unique(stimulus_Position_Array):  # loop over  positions
 
+                #  calculate accuracy (% correct)
                 this_subject_Accuracy[subject_Index, iPosition-1] = np.mean(subject_Response_Array[stimulus_Position_Array == iPosition])  # mean accuarcy of this subject on this position
                 this_subject_Accuracy_Class1[subject_Index, iPosition-1] = np.mean( subject_Response_Array[[stimulus_Position_Array == iPosition] and idx_Class1])  # mean accuracy in class 1
                 this_subject_Accuracy_Class2[subject_Index, iPosition-1] = np.mean( subject_Response_Array[[stimulus_Position_Array == iPosition] and idx_Class2])  # mean accuracy in class 2
@@ -57,7 +69,6 @@ for iCategory_Level in dir_Category_Levels:
         This_Experiment_Result['PerformanceClass_2'] = np.array(this_subject_Accuracy_Class2)
 
         This_category_Results[iExperiment_InCategory] = This_Experiment_Result
-        # print(This_Experiment_Result)
 
         print("*** Done ***", end="")
         print("")
@@ -66,12 +77,12 @@ for iCategory_Level in dir_Category_Levels:
 
 print('*** Data loading and analysis done ! ***')
 
+# just to make some position ticks
 position_Tick = list(np.round(np.unique(this_Subject_Data[this_Subject_Data.columns[4]])).astype(int))
 position_Tickn = [-position_Tickn for position_Tickn in position_Tick[:0:-1]]
 position_Tick = sum( [position_Tickn , [position_Tick[0]], position_Tick[1::1]], [])
-print(position_Tick)
 
-# Visualization
+# ****** Visualization ******
 print('*** Start the Visualization ***')
 
 MARKER_SIZE = 5
@@ -90,6 +101,7 @@ sEM_AS_ERRORBAR = True  # FALSE std, TRUE sem
 FIGURE_DIMENSION = [[5, 8],[3.5, 8]]  # dimension of the printed figure
 PDF_RESOLUTION = 300
 
+# set global font properties, this is going to apply to all plots, cool isn't it?
 params = {'legend.fontsize': 8,
          'axes.labelsize': 10,
          'axes.titlesize':8,
@@ -98,18 +110,18 @@ params = {'legend.fontsize': 8,
          'font.family':'arial'}
 plt.rcParams.update(params)
 
-
-
-fig, axs = plt.subplots(nrows=3, ncols=1)
+fig, axs = plt.subplots(nrows=3, ncols=1)  # make a subplot structure
 axs = axs.ravel()
 index_Subplot = 0
 
 for iCategory_Level in Results.keys():
-    all_Legends = ()
+
+    all_Legends = ()  # just to store the legend
+    #  we are making some color list to be used in plots
     NUM_COLORS = len(Results[iCategory_Level].keys())
-    # axs[index_Subplot].set_color_cycle([LINE_COLOR(1. * index_Color / NUM_COLORS) for index_Color in range(NUM_COLORS)])
     LINE_COLOR_LIST = [LINE_COLOR(1. * index_Color / NUM_COLORS) for index_Color in range(NUM_COLORS)]
     index_Color = 0
+
     for iExperiment_InCategory in Results[iCategory_Level].keys():
 
         mean_Accuracy_Matrix = np.mean(Results[iCategory_Level][iExperiment_InCategory]['PerformanceAll'], axis=0)
@@ -128,7 +140,7 @@ for iCategory_Level in Results.keys():
                                         markerfacecolor='white', markeredgecolor=LINE_COLOR_LIST[index_Color], linewidth=LINE_WIDTH,
                                         markersize=MARKER_SIZE, label=iExperiment_InCategory)
 
-
+        #  setting some axis properties
         axs[index_Subplot].set_xlim(X_AXIS_LIM)
         axs[index_Subplot].set_ylim(Y_AXIS_LIM)
         axs[index_Subplot].tick_params(length=TICK_LENGTH)
@@ -150,6 +162,7 @@ for iCategory_Level in Results.keys():
 
         all_Legends = all_Legends + (iExperiment_InCategory.replace('_', ' vs. '), )
         index_Color += 1
+
     if WANT_LEGEND == True:
         # Shrink current axis by 20%
         plot_Box = axs[index_Subplot].get_position()
@@ -162,6 +175,7 @@ for iCategory_Level in Results.keys():
 
     index_Subplot += 1
 
+# saving the PDF files with a proper name
 if SAVE_PDF == True:
     if WANT_LEGEND == True:
         fig.set_size_inches(SELECTED_FIGURE_DIMENSION[0], SELECTED_FIGURE_DIMENSION[1])
