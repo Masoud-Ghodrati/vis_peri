@@ -110,6 +110,7 @@ params = {'legend.fontsize': 8,
          'font.family':'arial'}
 plt.rcParams.update(params)
 
+# plotting accuracy for all categorical levels and all experiments individually
 fig, axs = plt.subplots(nrows=3, ncols=1)  # make a subplot structure
 axs = axs.ravel()
 index_Subplot = 0
@@ -185,5 +186,85 @@ if SAVE_PDF == True:
         fig.set_size_inches(SELECTED_FIGURE_DIMENSION[0], SELECTED_FIGURE_DIMENSION[1])
         fig.savefig(save_PDF_Path + 'Accuracy_FullScreen_All_Category_Levels_All_Tasks_' + str(datetime.datetime.today().date()) + '.pdf',
                     dpi=PDF_RESOLUTION, bbox_inches="tight")
+
+
+# plotting accuracy for the average of categorical levels
+fig, axs = plt.subplots(nrows=3, ncols=1)  # make a subplot structure
+axs = axs.ravel()
+FIGURE_DIMENSION = [[5, 8],[3.5, 8]]  # dimension of the printed figure
+index_Subplot = 0
+
+for iCategory_Level in Results.keys():
+
+    all_Legends = ()  # just to store the legend
+    #  we are making some color list to be used in plots
+    NUM_COLORS = len(Results[iCategory_Level].keys())
+    LINE_COLOR_LIST = [LINE_COLOR(1. * index_Color / NUM_COLORS) for index_Color in range(NUM_COLORS)]
+    index_Color = 0
+
+    for iExperiment_InCategory in Results[iCategory_Level].keys():
+
+        mean_Accuracy_Matrix = np.mean(Results[iCategory_Level][iExperiment_InCategory]['PerformanceAll'], axis=0)
+        if sEM_AS_ERRORBAR == True:
+            errorbar_Matrix = np.std(Results[iCategory_Level][iExperiment_InCategory]['PerformanceAll'], axis=0)\
+                              /np.sqrt(len(Results[iCategory_Level][iExperiment_InCategory]['PerformanceAll']))
+        elif sEM_AS_ERRORBAR == False:
+            errorbar_Matrix = np.std(Results[iCategory_Level][iExperiment_InCategory]['PerformanceAll'], axis=0)
+
+        if SAME_MARKER_FACECOLOR == True:
+            axs[index_Subplot].errorbar(x=np.arange(-4, 5), y=mean_Accuracy_Matrix, yerr=errorbar_Matrix, color=LINE_COLOR_LIST[index_Color], marker='o',
+                                        markerfacecolor=LINE_COLOR_LIST[index_Color], markeredgecolor=LINE_COLOR_LIST[index_Color], linewidth=LINE_WIDTH,
+                                        markersize=MARKER_SIZE, label=iExperiment_InCategory)
+        elif SAME_MARKER_FACECOLOR == False:
+            axs[index_Subplot].errorbar(x=np.arange(-4, 5), y=mean_Accuracy_Matrix, yerr=errorbar_Matrix, color=LINE_COLOR_LIST[index_Color], marker='o',
+                                        markerfacecolor='white', markeredgecolor=LINE_COLOR_LIST[index_Color], linewidth=LINE_WIDTH,
+                                        markersize=MARKER_SIZE, label=iExperiment_InCategory)
+
+        #  setting some axis properties
+        axs[index_Subplot].set_xlim(X_AXIS_LIM)
+        axs[index_Subplot].set_ylim(Y_AXIS_LIM)
+        axs[index_Subplot].tick_params(length=TICK_LENGTH)
+        axs[index_Subplot].set_yticks(np.linspace(Y_AXIS_1ST_TICK, Y_AXIS_LIM[1], num=Y_AXIS_LABEL_NUM_STEPS,
+                                                       endpoint=True))
+        axs[index_Subplot].set_yticklabels(np.linspace(Y_AXIS_1ST_TICK, Y_AXIS_LIM[1], num=Y_AXIS_LABEL_NUM_STEPS,
+                                                       endpoint=True))
+        axs[index_Subplot].set_xticks(np.linspace(-4,4,9,endpoint=True))
+        axs[index_Subplot].set_xticklabels(position_Tick)
+
+        for my_Axis in ['top', 'bottom', 'left', 'right']:
+            if my_Axis == 'bottom' or my_Axis == 'left':
+                axs[index_Subplot].spines[my_Axis].set_linewidth(AXIS_LINE_WIDTH)
+            else:
+                axs[index_Subplot].spines[my_Axis].set_linewidth(0)
+        if index_Subplot == 2:
+            axs[index_Subplot].set_xlabel('Eccentricity ($^o$)')
+            axs[index_Subplot].set_ylabel('Accuracy')
+
+        all_Legends = all_Legends + (iExperiment_InCategory.replace('_', ' vs. '), )
+        index_Color += 1
+
+    if WANT_LEGEND == True:
+        # Shrink current axis by 20%
+        plot_Box = axs[index_Subplot].get_position()
+        axs[index_Subplot].set_position([plot_Box.x0, plot_Box.y0, plot_Box.width * 0.65, plot_Box.height])
+        # Put a legend to the right of the current axis
+        axs[index_Subplot].legend(all_Legends, loc='center left', bbox_to_anchor=(1, 0.5), frameon=False)
+        SELECTED_FIGURE_DIMENSION = FIGURE_DIMENSION[0][:]
+    elif WANT_LEGEND == False:
+        SELECTED_FIGURE_DIMENSION = FIGURE_DIMENSION[1][:]
+
+    index_Subplot += 1
+
+# saving the PDF files with a proper name
+if SAVE_PDF == True:
+    if WANT_LEGEND == True:
+        fig.set_size_inches(SELECTED_FIGURE_DIMENSION[0], SELECTED_FIGURE_DIMENSION[1])
+        fig.savefig(save_PDF_Path + 'Accuracy_FullScreen_All_Category_Levels_All_Tasks_Legend_' + str(datetime.datetime.today().date()) + '.pdf',
+                    dpi=PDF_RESOLUTION, bbox_inches="tight")
+    elif WANT_LEGEND==False:
+        fig.set_size_inches(SELECTED_FIGURE_DIMENSION[0], SELECTED_FIGURE_DIMENSION[1])
+        fig.savefig(save_PDF_Path + 'Accuracy_FullScreen_All_Category_Levels_All_Tasks_' + str(datetime.datetime.today().date()) + '.pdf',
+                    dpi=PDF_RESOLUTION, bbox_inches="tight")
+
 
 plt.show()
