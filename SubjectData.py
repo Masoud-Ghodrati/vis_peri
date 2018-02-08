@@ -77,8 +77,8 @@ print('*** Start the Visualization ***')
 MARKER_SIZE = 5
 LINE_WIDTH = 1
 AXIS_LINE_WIDTH = 1
-# LINE_COLOR = colormap(brewermap([],'*YlGnBu'))
-TICK_LENGTH = 3
+LINE_COLOR = plt.get_cmap('gist_rainbow')
+TICK_LENGTH = 5
 X_AXIS_LIM = [-4.2, 4.2]
 Y_AXIS_LIM = [0.48, 1]
 Y_AXIS_1ST_TICK = 0.5
@@ -98,12 +98,18 @@ params = {'legend.fontsize': 8,
          'font.family':'arial'}
 plt.rcParams.update(params)
 
+
+
 fig, axs = plt.subplots(nrows=3, ncols=1)
 axs = axs.ravel()
 index_Subplot = 0
 
 for iCategory_Level in Results.keys():
     all_Legends = ()
+    NUM_COLORS = len(Results[iCategory_Level].keys())
+    # axs[index_Subplot].set_color_cycle([LINE_COLOR(1. * index_Color / NUM_COLORS) for index_Color in range(NUM_COLORS)])
+    LINE_COLOR_LIST = [LINE_COLOR(1. * index_Color / NUM_COLORS) for index_Color in range(NUM_COLORS)]
+    index_Color = 0
     for iExperiment_InCategory in Results[iCategory_Level].keys():
 
         mean_Accuracy_Matrix = np.mean(Results[iCategory_Level][iExperiment_InCategory]['PerformanceAll'], axis=0)
@@ -114,12 +120,12 @@ for iCategory_Level in Results.keys():
             errorbar_Matrix = np.std(Results[iCategory_Level][iExperiment_InCategory]['PerformanceAll'], axis=0)
 
         if SAME_MARKER_FACECOLOR == True:
-            axs[index_Subplot].errorbar(x=np.arange(-4, 5), y=mean_Accuracy_Matrix, yerr=errorbar_Matrix, marker='o',
-                                        markerfacecolor='red', markeredgecolor='black', linewidth=LINE_WIDTH,
+            axs[index_Subplot].errorbar(x=np.arange(-4, 5), y=mean_Accuracy_Matrix, yerr=errorbar_Matrix, color=LINE_COLOR_LIST[index_Color], marker='o',
+                                        markerfacecolor=LINE_COLOR_LIST[index_Color], markeredgecolor=LINE_COLOR_LIST[index_Color], linewidth=LINE_WIDTH,
                                         markersize=MARKER_SIZE, label=iExperiment_InCategory)
         elif SAME_MARKER_FACECOLOR == False:
-            axs[index_Subplot].errorbar(x=np.arange(-4, 5), y=mean_Accuracy_Matrix, yerr=errorbar_Matrix, marker='o',
-                                        markerfacecolor='white', markeredgecolor='black', linewidth=LINE_WIDTH,
+            axs[index_Subplot].errorbar(x=np.arange(-4, 5), y=mean_Accuracy_Matrix, yerr=errorbar_Matrix, color=LINE_COLOR_LIST[index_Color], marker='o',
+                                        markerfacecolor='white', markeredgecolor=LINE_COLOR_LIST[index_Color], linewidth=LINE_WIDTH,
                                         markersize=MARKER_SIZE, label=iExperiment_InCategory)
 
 
@@ -143,7 +149,7 @@ for iCategory_Level in Results.keys():
             axs[index_Subplot].set_ylabel('Accuracy')
 
         all_Legends = all_Legends + (iExperiment_InCategory.replace('_', ' vs. '), )
-
+        index_Color += 1
     if WANT_LEGEND == True:
         # Shrink current axis by 20%
         plot_Box = axs[index_Subplot].get_position()
