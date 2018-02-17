@@ -360,5 +360,90 @@ if SAVE_PDF == True:
                     dpi=PDF_RESOLUTION, bbox_inches="tight")
 
 
+# plotting averaged accuracy for all categorical levels and all experiments individually, for half a screen
+X_AXIS_LIM = [-.2, 4.2]
+fig, axs = plt.subplots(nrows=1, ncols=1)  # make a subplot structure
+FIGURE_DIMENSION = [[5, 3],[3.5, 3]]  # dimension of the printed figure
+
+all_Legends = ()  # just to store the legend
+#  we are making some color list to be used in plots
+NUM_COLORS = len(Results.keys())
+LINE_COLOR_LIST = [LINE_COLOR(1. * index_Color / NUM_COLORS) for index_Color in range(NUM_COLORS)]
+index_Color = 0
+
+for iCategory_Level in Results.keys():
+
+    Accuray_Matrix = []
+    for iExperiment_InCategory in Results[iCategory_Level].keys():
+        Accuray_Matrix.append(Results[iCategory_Level][iExperiment_InCategory]['PerformanceAll'])
+
+    Accuray_Matrix = np.reshape(Accuray_Matrix, (-1, len(position_Tick)))
+
+    mean_Accuracy_Matrix = [np.mean(Accuray_Matrix[:, 4]),      np.mean(Accuray_Matrix[:,[3, 5]]),
+                            np.mean(Accuray_Matrix[:, [2, 6]]), np.mean(Accuray_Matrix[:, [1, 7]]),
+                            np.mean(Accuray_Matrix[:, [0, 8]])]
+    if sEM_AS_ERRORBAR == True:
+        errorbar_Matrix = [np.std(Accuray_Matrix[:, 4]),       np.std(Accuray_Matrix[:,[3, 5]]),
+                            np.std(Accuray_Matrix[:, [2, 6]]), np.std(Accuray_Matrix[:, [1, 7]]),
+                            np.std(Accuray_Matrix[:, [0, 8]])]/np.sqrt(2*len(Accuray_Matrix))
+    elif sEM_AS_ERRORBAR == False:
+        errorbar_Matrix = [np.std(Accuray_Matrix[:, 4]),       np.std(Accuray_Matrix[:,[3, 5]]),
+                            np.std(Accuray_Matrix[:, [2, 6]]), np.std(Accuray_Matrix[:, [1, 7]]),
+                            np.std(Accuray_Matrix[:, [0, 8]])]
+
+    if SAME_MARKER_FACECOLOR == True:
+        axs.errorbar(x=np.arange(0, 5), y=mean_Accuracy_Matrix, yerr=errorbar_Matrix, color=LINE_COLOR_LIST[index_Color], marker='o',
+                                    markerfacecolor=LINE_COLOR_LIST[index_Color], markeredgecolor=LINE_COLOR_LIST[index_Color], linewidth=LINE_WIDTH,
+                                    markersize=MARKER_SIZE, label=iExperiment_InCategory)
+    elif SAME_MARKER_FACECOLOR == False:
+        axs.errorbar(x=np.arange(0, 5), y=mean_Accuracy_Matrix, yerr=errorbar_Matrix, color=LINE_COLOR_LIST[index_Color], marker='o',
+                                    markerfacecolor='white', markeredgecolor=LINE_COLOR_LIST[index_Color], linewidth=LINE_WIDTH,
+                                    markersize=MARKER_SIZE, label=iExperiment_InCategory)
+    all_Legends = all_Legends + (iCategory_Level,)
+    index_Color += 1
+
+#  setting some axis properties
+axs.set_xlim(X_AXIS_LIM)
+axs.set_ylim(Y_AXIS_LIM)
+axs.tick_params(length=TICK_LENGTH)
+axs.set_yticks(np.linspace(Y_AXIS_1ST_TICK, Y_AXIS_LIM[1], num=Y_AXIS_LABEL_NUM_STEPS, endpoint=True))
+axs.set_yticklabels(np.linspace(Y_AXIS_1ST_TICK, Y_AXIS_LIM[1], num=Y_AXIS_LABEL_NUM_STEPS, endpoint=True))
+axs.set_xticks(np.linspace(0, 4, 5,endpoint=True))
+axs.set_xticklabels(position_Tick[4::])
+
+# setting the axes line width, here we remove the right and top axes by setting the line width to zero
+for my_Axis in ['top', 'bottom', 'left', 'right']:
+    if my_Axis == 'bottom' or my_Axis == 'left':
+        axs.spines[my_Axis].set_linewidth(AXIS_LINE_WIDTH)
+    else:
+        axs.spines[my_Axis].set_linewidth(0)
+
+axs.set_xlabel('Eccentricity ($^o$)')
+axs.set_ylabel('Accuracy')
+
+
+
+if WANT_LEGEND == True:
+    # Shrink current axis by 20%
+    plot_Box = axs.get_position()
+    axs.set_position([plot_Box.x0, plot_Box.y0, plot_Box.width * 0.65, plot_Box.height])
+    # Put a legend to the right of the current axis
+    axs.legend(all_Legends, loc='center left', bbox_to_anchor=(1, 0.5), frameon=False)
+    SELECTED_FIGURE_DIMENSION = FIGURE_DIMENSION[0][:]
+elif WANT_LEGEND == False:
+    SELECTED_FIGURE_DIMENSION = FIGURE_DIMENSION[1][:]
+
+# saving the PDF files with a proper name
+if SAVE_PDF == True:
+    if WANT_LEGEND == True:
+        fig.set_size_inches(SELECTED_FIGURE_DIMENSION[0], SELECTED_FIGURE_DIMENSION[1])
+        fig.savefig(save_PDF_Path + 'Accuracy_HalfScreen_Average_of_All_Category_Levels_All_Tasks_Legend_' + str(datetime.datetime.today().date()) + '.pdf',
+                    dpi=PDF_RESOLUTION, bbox_inches="tight")
+    elif WANT_LEGEND==False:
+        fig.set_size_inches(SELECTED_FIGURE_DIMENSION[0], SELECTED_FIGURE_DIMENSION[1])
+        fig.savefig(save_PDF_Path + 'Accuracy_HalfScreen_Average_of_All_Category_Levels_All_Tasks_' + str(datetime.datetime.today().date()) + '.pdf',
+                    dpi=PDF_RESOLUTION, bbox_inches="tight")
+
+
 
 plt.show()
